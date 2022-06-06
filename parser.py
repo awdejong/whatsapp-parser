@@ -2,7 +2,6 @@ import pandas as pd
 import re
 from datetime import datetime
 
-
 def whatsapp_parse(source_file: str, anonymize: bool = True, exclude_media: bool = True) -> pd.DataFrame:
 
     # Store individual lines from source file
@@ -39,15 +38,17 @@ def whatsapp_parse(source_file: str, anonymize: bool = True, exclude_media: bool
 
     df.reset_index(drop=True, inplace=True)
 
-    # Factorize phone numbers and contact names
-    # Results in every user having a unique, anonymous ID
-    if anonymize:
-        df["user_id"] = pd.Series(pd.factorize(df.user)[0])
-
     # Convert text timestamp to datetime format
     df["datetime"] = df.timestamp.map(
         lambda x: datetime.strptime(x, "%m/%d/%y, %H:%M"))
 
-    df = df[["datetime", "userid", "content"]]
+    # Factorize phone numbers and contact names
+    # Results in every user having a unique, anonymous ID
+    if anonymize:
+        df["user_id"] = pd.Series(pd.factorize(df.user)[0])
+        df = df[["datetime", "userid", "content"]]
+    
+    else:
+        df = df[["datetime", "user", "content"]]
 
     return df
