@@ -12,7 +12,8 @@ def whatsapp_parse(source_file: str, anonymize: bool = True, exclude_media: bool
     rx = re.compile(
         r"((?:\d|1[0-2])\/(?:\d|[123]\d)\/(?:\d|\d\d)\, \d\d[:]\d\d) [-] (.+?)(?:[:] |left|added.+|changed the group.+)")
 
-    df = pd.DataFrame(columns=["timestamp", "user", "content"])
+    #df = pd.DataFrame(columns=["timestamp", "user", "content"])
+    rows = []
 
     # Go through file line by line, add new row to dataframe for each message.
     # When a line only has one element, it is a continuation of the previous message.
@@ -20,15 +21,20 @@ def whatsapp_parse(source_file: str, anonymize: bool = True, exclude_media: bool
         parts = rx.split(line)
 
         if len(parts) > 1:
-            row = pd.DataFrame([parts[1:]], columns=[
-                               "timestamp", "user", "content"])
-            df = pd.concat([df, row])
+            #create dict for row include time
+            row = dict()
+            row["timestamp"] = parts[1]
+            row["user"] = parts[2]
+            row["content"] = parts[3]
+            rows.append(row)
 
         else:
-            if len(df) > 0:
-                last = len(df)-1
-                df.iloc[last]["content"] = df.iloc[last]["content"] + parts[0]
+            if len(rows) > 0:
+                last = len(rows)-1
+                rows[last]["content"] = rows[last]["content"] + parts[0]
 
+    df = pd.DataFrame(rows)
+    
     # Remove empty messages and messages that only contained an image originally
     if exclude_media:
         df = df.drop(df[(df.content == "\n") | (
